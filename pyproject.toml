@@ -3,7 +3,7 @@ name = "portfolio-optimizer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "plotly>=6.5.2",
     "streamlit>=1.54.0",
