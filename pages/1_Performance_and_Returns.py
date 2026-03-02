@@ -2,16 +2,16 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from portfolio_optimizer.interest_data_service import load_risk_free_rates
-from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
-from portfolio_optimizer.portfolio_metrics import (
+from interest_data_service import load_risk_free_rates
+from market_data_service import get_prices_df
+from portfolio_metrics import (
     bin_annual_returns,
     compute_annual_excess_returns,
     compute_asset_growth_index,
     compute_portfolio_growth_index,
     compute_sharpe_ratio,
 )
-from portfolio_optimizer.utils import fig_layout
+from utils import fig_layout
 
 "# Portfolio Optimizer"
 
@@ -126,10 +126,10 @@ It's calculated with the following formula:"
 
 st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 
-"Where:"
-" - $R_p$: return of the portfolio"
-" - $R_f$: risk-free rate"
-" - $\sigma_p$: Standard deviation of the portfolio's excess return"
+"""Where:
+ - $R_p$: return of the portfolio
+ - $R_f$: risk-free rate
+ - $\\sigma_p$: Standard deviation of the portfolio's excess return"""
 
 "Sharpe Ratio Interpretation:"
 sharpe_table_df = pd.DataFrame(
