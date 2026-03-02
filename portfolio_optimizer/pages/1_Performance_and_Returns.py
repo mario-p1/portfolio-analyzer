@@ -11,79 +11,15 @@ from portfolio_optimizer.portfolio_metrics import (
     compute_portfolio_growth_index,
     compute_sharpe_ratio,
 )
-
-fig_layout = {
-    "hovermode": "x unified",
-    "legend": {
-        "title": "",
-        "orientation": "h",
-        "yanchor": "top",
-        "y": -0.2,
-        "xanchor": "center",
-        "x": 0.5,
-    },
-}
-
-
-if "tickers" not in st.session_state:
-    st.session_state.tickers = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
-    st.session_state["allocation_IUSQ.DE"] = 50
-    st.session_state["allocation_EUNL.DE"] = 30
-    st.session_state["allocation_IUSN.DE"] = 10
-    st.session_state["allocation_EUNM.DE"] = 10
-
-portfolio_items = []
-for i, item in enumerate(st.session_state.tickers.split(";")):
-    try:
-        ticker_data = get_ticker_details(item)
-        portfolio_items.append({"ticker": item, **ticker_data})
-    except Exception as e:
-        st.error(e)
-        st.stop()
-
-portfolio_df = pd.DataFrame.from_dict(portfolio_items)
+from portfolio_optimizer.utils import fig_layout
 
 "# Portfolio Optimizer"
 
-"## Portfolio Configuration"
-
-st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
-
-columns = st.columns(2)
-
-for item in portfolio_df.itertuples():
-    col = columns[item.Index % 2]
-    with col:
-        st.number_input(
-            f"Allocation of '{item.ticker}' (%)",
-            min_value=0,
-            max_value=100,
-            key=f"allocation_{item.ticker}",
-        )
-
-
-portfolio_df["allocation"] = portfolio_df["ticker"].map(
-    lambda ticker: st.session_state[f"allocation_{ticker}"]
-)
-
-if portfolio_df["allocation"].sum() != 100:
-    st.error("Sum of allocation accross all assets must be 100")
-    st.stop()
-
-"## Portfolio"
-"### Assets"
-# portfolio pie chart
-fig = px.pie(portfolio_df, values="allocation", names="name", hole=0.3)
-fig.update_traces(textinfo="label+percent")
-fig.update_layout(showlegend=False)
-st.plotly_chart(fig)
-
-# portfolio df
-st.dataframe(
-    portfolio_df[["ticker", "name", "currency", "allocation"]], hide_index=True
-)
-
 "## Growth Index"
+
+
+# Load state
+portfolio_df = st.session_state.portfolio_df
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
@@ -110,8 +46,10 @@ fig.update_layout(**fig_layout, showlegend=False)
 
 st.plotly_chart(fig)
 
-"## Returns"
+"## Portfolio Returns"
+
 "### Annual Returns"
+"""Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
 annual_returns_df = (
     portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
 )
@@ -147,6 +85,9 @@ fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
 
 "### Excess Return Rate vs Risk-Free Rate"
+"""The risk-free rate used is the average 3-month Euribor rate.
+The excess return rate is calculated as the difference between
+the portfolio's annual return rate and the risk-free annual rate."""
 interest_rates_df = load_risk_free_rates()
 annual_rates_df = compute_annual_excess_returns(annual_returns_df, interest_rates_df)
 
@@ -178,4 +119,31 @@ st.plotly_chart(fig)
 
 sharpe_ratio = compute_sharpe_ratio(annual_rates_df)
 
-f"#### Sharpe Ratio: {sharpe_ratio:.2f}"
+"### Sharpe Ratio"
+"The Sharpe Ratio is a measure of an investment's risk-adjusted performance,\
+calculated by comparing its return to that of a risk-free asset.\
+It's calculated with the following formula:"
+
+st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
+
+"Where:"
+" - $R_p$: return of the portfolio"
+" - $R_f$: risk-free rate"
+" - $\sigma_p$: Standard deviation of the portfolio's excess return"
+
+"Sharpe Ratio Interpretation:"
+sharpe_table_df = pd.DataFrame(
+    {
+        "Sharpe Ratio": ["< 1", "1 - 1.99", "2 - 2.99", "> 3"],
+        "Interpretation": [
+            "Bad",
+            "Adequate/good",
+            "Very good",
+            "Excellent",
+        ],
+    }
+)
+st.dataframe(sharpe_table_df, hide_index=True)
+
+
+st.info(f"The Sharpe Ratio of your portfolio is **{sharpe_ratio:.2f}**")
