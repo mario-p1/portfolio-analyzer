@@ -1,6 +1,6 @@
 import pandas as pd
 
-from portfolio_optimizer.config import EURIBOR_3M_PATH
+from config import EURIBOR_3M_PATH
 
 
 def load_risk_free_rates():

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from portfolio_optimizer.utils import rename_ticker_columns_to_names
+from utils import rename_ticker_columns_to_names
 
 
 def compute_asset_growth_index(
