@@ -3,9 +3,11 @@ import plotly.express as px
 import streamlit as st
 
 from portfolio_optimizer.interest_data_service import load_risk_free_rates
-from portfolio_optimizer.market_data_service import get_prices_df, get_ticker_details
+from portfolio_optimizer.market_data_service import get_prices_df
 from portfolio_optimizer.portfolio_metrics import (
     bin_annual_returns,
+    calculate_annual_returns,
+    calculate_arr,
     compute_annual_excess_returns,
     compute_asset_growth_index,
     compute_portfolio_growth_index,
@@ -13,13 +15,17 @@ from portfolio_optimizer.portfolio_metrics import (
 )
 from portfolio_optimizer.utils import fig_layout
 
-"# Portfolio Optimizer"
-
-"## Growth Index"
-
 
 # Load state
+if "portfolio_df" not in st.session_state:
+    st.error(
+        "Please go to the 'Portfolio Configuration' page and input your portfolio data."
+    )
+    st.stop()
 portfolio_df = st.session_state.portfolio_df
+
+"# Portfolio Optimizer"
+"## Growth Index"
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
@@ -50,13 +56,11 @@ st.plotly_chart(fig)
 
 "### Annual Returns"
 """Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
-annual_returns_df = (
-    portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
-)
-annual_returns_df.columns = ["annual_return"]
-annual_returns_df["sign"] = (
-    annual_returns_df["annual_return"].ge(0).map({True: "positive", False: "negative"})
-)
+annual_returns_df = calculate_annual_returns(portfolio_performance_df)
+annualized_return = calculate_arr(annual_returns_df)
+
+st.metric("Annualized Return Rate", f"{annualized_return:.2f} %")
+
 
 fig = px.bar(
     annual_returns_df,
@@ -64,7 +68,7 @@ fig = px.bar(
     y="annual_return",
     color="sign",
     color_discrete_map={"positive": "green", "negative": "red"},
-    labels={"value": "Annual Return Rate (%)", "date": "Year"},
+    labels={"annual_return": "Annual Return Rate (%)", "x": "Year"},
 )
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
@@ -89,10 +93,12 @@ st.plotly_chart(fig)
 The excess return rate is calculated as the difference between
 the portfolio's annual return rate and the risk-free annual rate."""
 interest_rates_df = load_risk_free_rates()
-annual_rates_df = compute_annual_excess_returns(annual_returns_df, interest_rates_df)
+annual_excess_returns_df = compute_annual_excess_returns(
+    annual_returns_df, interest_rates_df
+)
 
 fig_df = (
-    annual_rates_df[
+    annual_excess_returns_df[
         ["portfolio_return", "risk_free_annual_rate", "excess_return_rate"]
     ].rename(
         columns={
@@ -117,9 +123,10 @@ fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
 
 
-sharpe_ratio = compute_sharpe_ratio(annual_rates_df)
+sharpe_ratio = compute_sharpe_ratio(annual_excess_returns_df)
 
 "### Sharpe Ratio"
+
 "The Sharpe Ratio is a measure of an investment's risk-adjusted performance,\
 calculated by comparing its return to that of a risk-free asset.\
 It's calculated with the following formula:"
@@ -131,7 +138,8 @@ st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 " - $R_f$: risk-free rate"
 " - $\sigma_p$: Standard deviation of the portfolio's excess return"
 
-"Sharpe Ratio Interpretation:"
+
+st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}")
 sharpe_table_df = pd.DataFrame(
     {
         "Sharpe Ratio": ["< 1", "1 - 1.99", "2 - 2.99", "> 3"],
@@ -143,7 +151,5 @@ sharpe_table_df = pd.DataFrame(
         ],
     }
 )
+"Sharpe Ratio Interpretation:"
 st.dataframe(sharpe_table_df, hide_index=True)
-
-
-st.info(f"The Sharpe Ratio of your portfolio is **{sharpe_ratio:.2f}**")

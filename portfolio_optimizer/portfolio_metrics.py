@@ -89,3 +89,30 @@ def compute_sharpe_ratio(annual_rates_df: pd.DataFrame) -> float:
         annual_rates_df["excess_return_rate"].mean()
         / annual_rates_df["excess_return_rate"].std()
     )
+
+
+def calculate_annual_returns(
+    portfolio_performance_df: pd.DataFrame, current_year: int = datetime.now().year
+) -> pd.DataFrame:
+    annual_returns_df = (
+        portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
+    )
+    annual_returns_df.columns = ["annual_return"]
+
+    annual_returns_df = annual_returns_df[annual_returns_df.index.year < current_year]
+
+    annual_returns_df["sign"] = (
+        annual_returns_df["annual_return"]
+        .ge(0)
+        .map({True: "positive", False: "negative"})
+    )
+
+    return annual_returns_df
+
+
+def calculate_arr(annual_returns_df: pd.DataFrame) -> float:
+    """Annualized Return Rate"""
+    n_years = len(annual_returns_df)
+    return (
+        (1 + annual_returns_df["annual_return"].div(100)).prod() ** (1 / n_years) - 1
+    ) * 100
