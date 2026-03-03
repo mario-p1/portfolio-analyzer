@@ -3,18 +3,16 @@ import pandas as pd
 from portfolio_optimizer.config import EURIBOR_3M_PATH
 
 
-def load_risk_free_rates():
+def load_risk_free_rates() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Returns:
+    - monthly_df
+    - annual_df
+    """
     df = pd.read_csv(EURIBOR_3M_PATH, usecols=[0, 2], parse_dates=[0])
-    df.columns = ["date", "annual_rate"]
-    df = df.resample("ME", on="date").last()
+    df.columns = ["date", "rate"]
 
-    df["annual_rate"] = df["annual_rate"].div(100)
+    monthly_df = df.resample("ME", on="date").last()
+    monthly_df["rate"] = ((1 + monthly_df["rate"] / 100) ** (1 / 12) - 1) * 100
 
-    # TODO: Use effective annual rates instead of average of the monthly rates
-    df = (
-        df.resample("YE")["annual_rate"]
-        .mean()
-        .to_frame()
-        .rename(columns={"annual_rate": "risk_free_annual_rate"})
-    )
-    return df
+    annual_df = df.resample("YE", on="date").mean()
+    return monthly_df, annual_df

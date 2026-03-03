@@ -1,8 +1,9 @@
 from datetime import datetime
+import streamlit as st
 
 import pandas as pd
 
-from portfolio_optimizer.utils import rename_ticker_columns_to_names
+from utils import rename_ticker_columns_to_names
 
 
 def compute_asset_growth_index(
@@ -34,54 +35,58 @@ def compute_portfolio_growth_index(
     return portfolio_growth_df
 
 
-def bin_annual_returns(annual_returns_df: pd.DataFrame, bin_by: int) -> pd.DataFrame:
-    min_annual_return = (
-        int(annual_returns_df["annual_return"].min() / bin_by - 1) * bin_by
+def calculate_return_rates(
+    value_series: pd.Series, current_year: int = datetime.now().year
+) -> pd.DataFrame:
+    return_rates_df = (value_series.pct_change().dropna() * 100).to_frame(name="return")
+
+    return_rates_df = return_rates_df[return_rates_df.index.year < current_year]
+
+    return_rates_df["sign"] = (
+        return_rates_df["return"].ge(0).map({True: "positive", False: "negative"})
     )
-    max_annual_return = (
-        int(annual_returns_df["annual_return"].max() / bin_by + 1) * bin_by
-    )
+
+    return return_rates_df
+
+
+def calculate_return_bins(return_rates_series: pd.Series, bin_by: int) -> pd.DataFrame:
+    min_annual_return = int(return_rates_series.min() / bin_by - 1) * bin_by
+    max_annual_return = int(return_rates_series.max() / bin_by + 1) * bin_by
 
     bin_region = max(abs(min_annual_return), abs(max_annual_return))
 
     bins = list(range(-bin_region, bin_region + bin_by, bin_by))
 
     annual_bins = (
-        pd.cut(annual_returns_df["annual_return"], bins=bins, labels=bins[:-1])
+        pd.cut(return_rates_series, bins=bins, labels=bins[:-1])
         .value_counts()
         .sort_index()
         .to_frame()
-        .reset_index()
+        .reset_index(names="return_bin_left")
     )
 
     annual_bins["sign"] = (
-        annual_bins["annual_return"].ge(0).map({True: "positive", False: "negative"})
+        annual_bins["return_bin_left"].ge(0).map({True: "positive", False: "negative"})
     )
-    annual_bins["label"] = annual_bins["annual_return"].map(
+    annual_bins["label"] = annual_bins["return_bin_left"].map(
         lambda x: f"{x} to {x + bin_by} %"
     )
 
     return annual_bins
 
 
-def compute_annual_excess_returns(
-    annual_returns_df: pd.DataFrame,
-    interest_rates_df: pd.DataFrame,
+def compute_excess_returns(
+    return_series: pd.Series,
+    interest_rate_series: pd.Series,
     current_year: int = datetime.now().year,
 ) -> pd.DataFrame:
-    annual_rates_df = annual_returns_df.copy().rename(
-        columns={"annual_return": "portfolio_return"}
+    excess_returns_df = return_series.to_frame(name="portfolio_return")
+    excess_returns_df["risk_free_rate"] = interest_rate_series
+    excess_returns_df["excess_return_rate"] = (
+        excess_returns_df["portfolio_return"] - excess_returns_df["risk_free_rate"]
     )
-    annual_rates_df["portfolio_return"] = annual_rates_df["portfolio_return"].div(100)
-
-    annual_rates_df = annual_rates_df.join(interest_rates_df, how="inner").dropna()
-    annual_rates_df["excess_return_rate"] = (
-        annual_rates_df["portfolio_return"] - annual_rates_df["risk_free_annual_rate"]
-    )
-
-    annual_rates_df = annual_rates_df[annual_rates_df.index.year < current_year]
-
-    return annual_rates_df
+    excess_returns_df = excess_returns_df[excess_returns_df.index.year < current_year]
+    return excess_returns_df
 
 
 def compute_sharpe_ratio(annual_rates_df: pd.DataFrame) -> float:
@@ -91,28 +96,7 @@ def compute_sharpe_ratio(annual_rates_df: pd.DataFrame) -> float:
     )
 
 
-def calculate_annual_returns(
-    portfolio_performance_df: pd.DataFrame, current_year: int = datetime.now().year
-) -> pd.DataFrame:
-    annual_returns_df = (
-        portfolio_performance_df.resample("YE").last().pct_change().dropna() * 100
-    )
-    annual_returns_df.columns = ["annual_return"]
-
-    annual_returns_df = annual_returns_df[annual_returns_df.index.year < current_year]
-
-    annual_returns_df["sign"] = (
-        annual_returns_df["annual_return"]
-        .ge(0)
-        .map({True: "positive", False: "negative"})
-    )
-
-    return annual_returns_df
-
-
-def calculate_arr(annual_returns_df: pd.DataFrame) -> float:
+def calculate_arr(return_series: pd.Series) -> float:
     """Annualized Return Rate"""
-    n_years = len(annual_returns_df)
-    return (
-        (1 + annual_returns_df["annual_return"].div(100)).prod() ** (1 / n_years) - 1
-    ) * 100
+    n_years = len(return_series)
+    return ((1 + return_series.div(100)).prod() ** (1 / n_years) - 1) * 100

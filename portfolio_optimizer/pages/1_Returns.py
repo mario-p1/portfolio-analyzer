@@ -5,10 +5,10 @@ import streamlit as st
 from portfolio_optimizer.interest_data_service import load_risk_free_rates
 from portfolio_optimizer.market_data_service import get_prices_df
 from portfolio_optimizer.portfolio_metrics import (
-    bin_annual_returns,
-    calculate_annual_returns,
+    calculate_return_bins,
+    calculate_return_rates,
     calculate_arr,
-    compute_annual_excess_returns,
+    compute_excess_returns,
     compute_asset_growth_index,
     compute_portfolio_growth_index,
     compute_sharpe_ratio,
@@ -52,25 +52,30 @@ st.plotly_chart(fig)
 
 "## Annual Returns"
 """Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
-annual_returns_df = calculate_annual_returns(portfolio_performance_df)
-annualized_return = calculate_arr(annual_returns_df)
+annual_returns_df = calculate_return_rates(
+    portfolio_performance_df.resample("YE").last()["portfolio_value"]
+)
+monthly_returns_df = calculate_return_rates(
+    portfolio_performance_df.resample("ME").last()["portfolio_value"]
+)
+annualized_return = calculate_arr(annual_returns_df["return"])
 
 st.metric("Annualized Return Rate", f"{annualized_return:.2f} %", border=True)
 
 fig = px.bar(
     annual_returns_df,
     x=annual_returns_df.index.year,
-    y="annual_return",
+    y="return",
     color="sign",
     color_discrete_map={"positive": "green", "negative": "red"},
-    labels={"annual_return": "Annual Return Rate (%)", "x": "Year"},
+    labels={"return": "Annual Return Rate (%)", "x": "Year"},
 )
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
 
 
 "### Annual Returns Count"
-annual_bins_df = bin_annual_returns(annual_returns_df, bin_by=5)
+annual_bins_df = calculate_return_bins(annual_returns_df["return"], bin_by=5)
 
 fig = px.bar(
     annual_bins_df,
@@ -87,26 +92,27 @@ st.plotly_chart(fig)
 """The risk-free rate used is the average 3-month Euribor rate.
 The excess return rate is calculated as the difference between
 the portfolio's annual return rate and the risk-free annual rate."""
-interest_rates_df = load_risk_free_rates()
-annual_excess_returns_df = compute_annual_excess_returns(
-    annual_returns_df, interest_rates_df
+monthly_risk_free_rates_df, annual_risk_free_rates_df = load_risk_free_rates()
+
+
+monthly_excess_df = compute_excess_returns(
+    monthly_returns_df["return"], monthly_risk_free_rates_df["rate"]
+)
+annual_excess_df = compute_excess_returns(
+    annual_returns_df["return"], annual_risk_free_rates_df["rate"]
 )
 
-fig_df = (
-    annual_excess_returns_df[
-        ["portfolio_return", "risk_free_annual_rate", "excess_return_rate"]
-    ].rename(
-        columns={
-            "portfolio_return": "Portfolio Return Rate",
-            "risk_free_annual_rate": "Risk-Free Annual Rate",
-            "excess_return_rate": "Excess Return Rate",
-        }
-    )
-    * 100
+
+fig_df = annual_excess_df.rename(
+    columns={
+        "portfolio_return": "Portfolio Return Rate",
+        "risk_free_rate": "Risk-Free Rate",
+        "excess_return_rate": "Excess Return Rate",
+    }
 )
 fig = px.line(
     fig_df,
-    x=fig_df.index.year,
+    x=fig_df.index,
     y=fig_df.columns,
     labels={
         "x": "Year",
@@ -118,7 +124,7 @@ fig.update_layout(**fig_layout)
 st.plotly_chart(fig)
 
 
-sharpe_ratio = compute_sharpe_ratio(annual_excess_returns_df)
+sharpe_ratio = compute_sharpe_ratio(monthly_excess_df)
 
 "## Risk-Adjusted Performance"
 "### Sharpe Ratio"
@@ -128,10 +134,13 @@ It's calculated with the following formula:"
 
 st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 
-"Where:"
-" - $R_p$: return of the portfolio"
-" - $R_f$: risk-free rate"
-" - $\\sigma_p$: Standard deviation of the portfolio's excess return"
+"""
+Where:
+ - $R_p$: return of the portfolio
+ - $R_f$: risk-free rate
+ - $\\sigma_p$: Standard deviation of the portfolio's excess return
+ 
+The Sharpe Ratio is calculated using the monthly excess return rates and the standard deviation of those returns."""
 st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
 sharpe_table_df = pd.DataFrame(
