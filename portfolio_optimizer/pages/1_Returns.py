@@ -102,8 +102,10 @@ annual_excess_df = compute_excess_returns(
     annual_returns_df["return"], annual_risk_free_rates_df["rate"]
 )
 
+excess_period_pill = st.pills("Time period:", ["Annual", "Monthly"], default="Annual")
 
-fig_df = annual_excess_df.rename(
+fig_df = annual_excess_df if excess_period_pill == "Annual" else monthly_excess_df
+fig_df = fig_df.rename(
     columns={
         "portfolio_return": "Portfolio Return Rate",
         "risk_free_rate": "Risk-Free Rate",
@@ -112,10 +114,11 @@ fig_df = annual_excess_df.rename(
 )
 fig = px.line(
     fig_df,
-    x=fig_df.index.year,
+    x=fig_df.index,
     y=fig_df.columns,
     labels={
-        "x": "Year",
+        "x": "Date",
+        "date": "Date",
         "value": "Rate",
         "variable": "Type",
     },
