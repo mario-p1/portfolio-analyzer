@@ -140,7 +140,8 @@ Where:
  - $R_f$: risk-free rate
  - $\\sigma_p$: Standard deviation of the portfolio's excess return
  
-The Sharpe Ratio is calculated using the monthly excess return rates and the standard deviation of those returns."""
+The Sharpe Ratio is calculated from monthly excess returns."""
+
 st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
 sharpe_table_df = pd.DataFrame(
