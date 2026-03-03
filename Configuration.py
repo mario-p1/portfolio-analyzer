@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from portfolio_optimizer.market_data_service import get_ticker_details
+from market_data_service import get_ticker_details
 
 if "tickers" not in st.session_state:
     st.session_state.tickers = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"

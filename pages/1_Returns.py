@@ -2,9 +2,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from portfolio_optimizer.interest_data_service import load_risk_free_rates
-from portfolio_optimizer.market_data_service import get_prices_df
-from portfolio_optimizer.portfolio_metrics import (
+from interest_data_service import load_risk_free_rates
+from market_data_service import get_prices_df
+from portfolio_metrics import (
     calculate_return_bins,
     calculate_return_rates,
     calculate_arr,
@@ -13,7 +13,7 @@ from portfolio_optimizer.portfolio_metrics import (
     compute_portfolio_growth_index,
     compute_sharpe_ratio,
 )
-from portfolio_optimizer.utils import ensure_portfolio_configured, fig_layout
+from utils import ensure_portfolio_configured, fig_layout
 
 
 ensure_portfolio_configured()
