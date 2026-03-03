@@ -18,13 +18,11 @@ from portfolio_optimizer.utils import fig_layout
 
 # Load state
 if "portfolio_df" not in st.session_state:
-    st.error(
-        "Please go to the 'Portfolio Configuration' page and input your portfolio data."
-    )
+    st.error("Please go to the 'Configuration' page to configure your portfolio.")
     st.stop()
 portfolio_df = st.session_state.portfolio_df
 
-"# Portfolio Optimizer"
+"# Portfolio Optimizer - Returns Analysis"
 "## Growth Index"
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
@@ -52,15 +50,12 @@ fig.update_layout(**fig_layout, showlegend=False)
 
 st.plotly_chart(fig)
 
-"## Portfolio Returns"
-
-"### Annual Returns"
+"## Annual Returns"
 """Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
 annual_returns_df = calculate_annual_returns(portfolio_performance_df)
 annualized_return = calculate_arr(annual_returns_df)
 
-st.metric("Annualized Return Rate", f"{annualized_return:.2f} %")
-
+st.metric("Annualized Return Rate", f"{annualized_return:.2f} %", border=True)
 
 fig = px.bar(
     annual_returns_df,
@@ -88,7 +83,7 @@ fig = px.bar(
 fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
 
-"### Excess Return Rate vs Risk-Free Rate"
+"## Excess Return Rate vs Risk-Free Rate"
 """The risk-free rate used is the average 3-month Euribor rate.
 The excess return rate is calculated as the difference between
 the portfolio's annual return rate and the risk-free annual rate."""
@@ -125,8 +120,8 @@ st.plotly_chart(fig)
 
 sharpe_ratio = compute_sharpe_ratio(annual_excess_returns_df)
 
+"## Risk-Adjusted Performance"
 "### Sharpe Ratio"
-
 "The Sharpe Ratio is a measure of an investment's risk-adjusted performance,\
 calculated by comparing its return to that of a risk-free asset.\
 It's calculated with the following formula:"
@@ -137,9 +132,8 @@ st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 " - $R_p$: return of the portfolio"
 " - $R_f$: risk-free rate"
 " - $\sigma_p$: Standard deviation of the portfolio's excess return"
+st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
-
-st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}")
 sharpe_table_df = pd.DataFrame(
     {
         "Sharpe Ratio": ["< 1", "1 - 1.99", "2 - 2.99", "> 3"],

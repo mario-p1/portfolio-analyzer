@@ -22,9 +22,7 @@ for i, item in enumerate(st.session_state.tickers.split(";")):
 
 portfolio_df = pd.DataFrame.from_dict(portfolio_items)
 
-"# Portfolio Optimizer"
-
-"## Portfolio Configuration"
+"# Portfolio Optimizer - Configuration"
 
 st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
 
@@ -39,7 +37,6 @@ for item in portfolio_df.itertuples():
             max_value=100,
             key=f"allocation_{item.ticker}",
         )
-
 
 portfolio_df["allocation"] = portfolio_df["ticker"].map(
     lambda ticker: st.session_state[f"allocation_{ticker}"]
