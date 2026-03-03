@@ -13,13 +13,10 @@ from portfolio_optimizer.portfolio_metrics import (
     compute_portfolio_growth_index,
     compute_sharpe_ratio,
 )
-from portfolio_optimizer.utils import fig_layout
+from portfolio_optimizer.utils import ensure_portfolio_configured, fig_layout
 
 
-# Load state
-if "portfolio_df" not in st.session_state:
-    st.error("Please go to the 'Configuration' page to configure your portfolio.")
-    st.stop()
+ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
 "# Portfolio Optimizer - Returns Analysis"
