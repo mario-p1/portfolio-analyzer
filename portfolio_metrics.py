@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pandas as pd
-import streamlit as st
 
 
 def compute_portfolio_growth(
@@ -16,7 +15,7 @@ def compute_portfolio_growth(
 
     growth_df["portfolio_growth"] = (growth_df * allocation).sum(axis=1)
 
-    growth_df = (growth_df * normalize_value / growth_df.iloc[0]).round(0)
+    growth_df = growth_df * normalize_value / growth_df.iloc[0]
 
     return growth_df
 
@@ -86,3 +85,15 @@ def calculate_arr(return_series: pd.Series) -> float:
     """Annualized Return Rate"""
     n_years = len(return_series)
     return ((1 + return_series.div(100)).prod() ** (1 / n_years) - 1) * 100
+
+
+def compute_drawdown_df(growth_series: pd.Series) -> pd.DataFrame:
+    drawdown_df = growth_series.to_frame("growth")
+
+    drawdown_df["max_to_date"] = drawdown_df["growth"].expanding().max()
+    drawdown_df["drawdown"] = drawdown_df["max_to_date"] - drawdown_df["growth"]
+    drawdown_df["drawdown"] = drawdown_df["drawdown"] * -100
+
+    drawdown_df = drawdown_df.resample("ME").max()
+
+    return drawdown_df

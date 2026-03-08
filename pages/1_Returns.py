@@ -30,7 +30,7 @@ monthly_prices_df = prices_df.resample("ME").last()
 
 portfolio_growth_df = compute_portfolio_growth(
     monthly_prices_df, portfolio_df, normalize_value=10_000
-)
+).round(0)
 
 "### Comparative Asset Performance"
 """Each asset receives 10.000 €, invested at the same time,
