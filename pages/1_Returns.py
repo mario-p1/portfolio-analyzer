@@ -37,7 +37,7 @@ portfolio_growth_df = compute_portfolio_growth(
 beginning from the newest fund's starting date."""
 
 indv_growth_df = portfolio_growth_df[portfolio_df["ticker"]]
-rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
+indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
 
 fig = px.line(indv_growth_df, labels={"variable": "Asset", "value": "Value"})
 fig.update_layout(**fig_layout)
