@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pandas as pd
+import streamlit as st
 
 
 def compute_portfolio_growth(
@@ -97,6 +98,6 @@ def compute_drawdown_df(growth_series: pd.Series) -> pd.DataFrame:
         * 100
     )
 
-    drawdown_df = drawdown_df.resample("ME").max()
+    drawdown_df = drawdown_df.resample("ME").min()
 
     return drawdown_df
