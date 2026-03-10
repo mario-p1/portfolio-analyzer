@@ -5,11 +5,16 @@ import streamlit as st
 from market_data_service import get_ticker_details
 
 if "tickers" not in st.session_state:
-    st.session_state.tickers = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
+    st.session_state["tickers"] = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
     st.session_state["allocation_IUSQ.DE"] = 50
     st.session_state["allocation_EUNL.DE"] = 30
     st.session_state["allocation_IUSN.DE"] = 10
     st.session_state["allocation_EUNM.DE"] = 10
+
+
+"# Portfolio Optimizer - Configuration"
+
+st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
 
 portfolio_items = []
 for i, item in enumerate(st.session_state.tickers.split(";")):
@@ -21,11 +26,6 @@ for i, item in enumerate(st.session_state.tickers.split(";")):
         st.stop()
 
 portfolio_df = pd.DataFrame.from_dict(portfolio_items)
-
-"# Portfolio Optimizer - Configuration"
-
-st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
-
 columns = st.columns(2)
 
 for item in portfolio_df.itertuples():
