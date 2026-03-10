@@ -35,15 +35,17 @@ monthly_prices_df = prices_df.resample("ME").last()
 monthly_growth_df = compute_portfolio_growth(monthly_prices_df, portfolio_df)
 monthly_growth_df["monthly_return"] = monthly_growth_df["portfolio_growth"].pct_change()
 
+st.write(monthly_growth_df)
+
 # TODO: Check formulas
 var_95 = (
     12 * monthly_growth_df["monthly_return"].mean()
-    - math.sqrt(12) * 1.645 * monthly_growth_df["monthly_return"].std() * 100
-)
+    - math.sqrt(12) * 1.645 * monthly_growth_df["monthly_return"].std()
+) * 100
 var_99 = (
     12 * monthly_growth_df["monthly_return"].mean()
-    - math.sqrt(12) * 2.33 * monthly_growth_df["monthly_return"].std() * 100
-)
+    - math.sqrt(12) * 2.33 * monthly_growth_df["monthly_return"].std()
+) * 100
 
 left_col, right_col = st.columns(2)
 with left_col:
