@@ -3,8 +3,9 @@ import plotly.express as px
 import streamlit as st
 
 from market_data_service import get_ticker_details
+from utils import load_value, store_value
 
-if "tickers" not in st.session_state:
+if "tickers" not in st.session_state.to_dict():
     st.session_state["tickers"] = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
     st.session_state["allocation_IUSQ.DE"] = 50
     st.session_state["allocation_EUNL.DE"] = 30
@@ -14,7 +15,13 @@ if "tickers" not in st.session_state:
 
 "# Portfolio Optimizer - Configuration"
 
-st.text_input("Tickers present in your portfolio (separated by ';')", key="tickers")
+load_value("tickers")
+st.text_input(
+    "Tickers present in your portfolio (separated by ';')",
+    key="_tickers",
+    on_change=store_value,
+    args=["tickers"],
+)
 
 portfolio_items = []
 for i, item in enumerate(st.session_state.tickers.split(";")):
@@ -31,12 +38,16 @@ columns = st.columns(2)
 for item in portfolio_df.itertuples():
     col = columns[item.Index % 2]
     with col:
+        load_value(f"allocation_{item.ticker}")
         st.number_input(
             f"Allocation of '{item.ticker}' (%)",
             min_value=0,
             max_value=100,
-            key=f"allocation_{item.ticker}",
+            key=f"_allocation_{item.ticker}",
+            on_change=store_value,
+            args=[f"allocation_{item.ticker}"],
         )
+        store_value(f"allocation_{item.ticker}")
 
 portfolio_df["allocation"] = portfolio_df["ticker"].map(
     lambda ticker: st.session_state[f"allocation_{ticker}"]

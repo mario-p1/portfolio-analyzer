@@ -15,6 +15,15 @@ def ensure_portfolio_configured():
         st.stop()
 
 
+def load_value(key):
+    if key in st.session_state:
+        st.session_state[f"_{key}"] = st.session_state[key]
+
+
+def store_value(key):
+    st.session_state[key] = st.session_state[f"_{key}"]
+
+
 fig_layout = {
     "hovermode": "x unified",
     "legend": {
