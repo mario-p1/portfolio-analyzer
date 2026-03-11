@@ -52,8 +52,8 @@ st.latex(r"VaR_{monthly} = \mu -  z \cdot \sigma")
 st.latex(r"VaR_{annual} = 12 \cdot \mu - \sqrt{12} \cdot z \cdot \sigma")
 
 """where:
-- $\mu$ is the mean of the monthly returns
-- $\sigma$ is the standard deviation of the monthly returns
+- $\\mu$ is the mean of the monthly returns
+- $\\sigma$ is the standard deviation of the monthly returns
 - $z$ is the z-score corresponding to the confidence level
 """
 

@@ -109,7 +109,6 @@ def compute_value_at_risk(
     return_series: pd.Series, confidence_level: float = 0.95, scale: int = 1
 ) -> float:
     z_score = norm.ppf(confidence_level)
-    print(confidence_level, z_score)
     return (
         scale * return_series.mean() - math.sqrt(scale) * z_score * return_series.std()
     ) * 100
