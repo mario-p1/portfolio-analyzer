@@ -9,17 +9,13 @@ from portfolio_metrics import (
     bin_series,
     compute_portfolio_growth,
 )
-from utils import (
-    ensure_portfolio_configured,
-    fig_layout,
-    rename_ticker_columns_to_names,
-)
+from utils import ensure_portfolio_configured, fig_layout
 
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
-"# Portfolio Optimizer - Portfolio Forecast"
-"""Use Monte Carlo Simulation to forecast the future performance of your portfolio,
+"# Portfolio Optimizer - Forecast"
+"""Uses Monte Carlo Simulation to forecast the future performance of your portfolio,
 based on the historical returns of its assets."""
 
 
