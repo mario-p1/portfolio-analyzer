@@ -50,7 +50,7 @@ f"""The Monte Carlo simulation was performed by simulating {num_simulations} pos
 paths of the portfolio value over the next {days} days,
 based on the historical mean and standard deviation of daily returns.
 
-For practical purposes, only 25 simulated paths are shown in the plot below.
+For practical purposes, only 20 simulated paths are shown in the plot below.
 """
 
 st.slider(
@@ -63,7 +63,7 @@ st.slider(
 )
 
 fig = px.line(
-    forecast[:10, :].T,
+    forecast[:20, :].T,
     labels={"index": "Days", "value": "Simulated Portfolio Value"},
 )
 fig.update_layout(**{**fig_layout, "showlegend": False, "hovermode": False})
