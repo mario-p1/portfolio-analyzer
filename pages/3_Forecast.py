@@ -63,7 +63,7 @@ st.slider(
 )
 
 fig = px.line(
-    forecast[:25, :].T,
+    forecast[:10, :].T,
     labels={"index": "Days", "value": "Simulated Portfolio Value"},
 )
 fig.update_layout(**{**fig_layout, "showlegend": False, "hovermode": False})
