@@ -1,6 +1,6 @@
 ## Disclaimer
 
-This project is a **experimental portfolio optimization tool** created for learning and demonstration purposes.
+This project is a **experimental tool** created for learning and demonstration purposes.
 
 **It is not intended for production use or real financial decision-making.**
 
