@@ -59,7 +59,7 @@ daily_bins_df = (
 
 
 normal_dist_df = pd.DataFrame(
-    {"value": norm.rvs(loc=mean * 100, scale=std * 100, size=100_000)}
+    {"value": norm.rvs(loc=mean * 100, scale=std * 100, size=10_000)}
 )
 
 
