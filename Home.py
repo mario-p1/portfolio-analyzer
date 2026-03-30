@@ -5,7 +5,11 @@ import streamlit as st
 
 from portfolio_analyzer.market_data_service import get_prices_df, get_ticker_details
 from portfolio_analyzer.metrics import calculate_return_rates, compute_portfolio_growth
-from portfolio_analyzer.utils import rename_ticker_columns_to_names
+from portfolio_analyzer.utils import (
+    load_value,
+    rename_ticker_columns_to_names,
+    store_value,
+)
 
 "# Portfolio Analyzer"
 "## Disclaimer"
@@ -31,36 +35,57 @@ Use Monte Carlo simulations to forecast future performance and optimize your por
 Configure your portfolio by entering its assets and their allocations.
 All analyses and results throughout the app will use this setup.
 
-- **Ticker**: The asset's ticker symbol (Yahoo Finance format, e.g., `AAPL`, `IUSQ.DE`).
-- **Allocation (%)**: The percentage of your portfolio for each asset.
-All allocations must add up to 100%.
-
-Note: You can add or remove assets dynamically.
-The app will automatically fetch asset details and validate your inputs.
+- **Ticker**: Enter each asset's ticker symbol (Yahoo Finance format, e.g., `AAPL`, `IUSQ.DE`).
+Separate multiple tickers with semicolons (`;`).
+- **Allocation**: Specify the percentage of your portfolio allocated to each asset.
+The total allocation across all assets must sum to 100%.
 """
-portfolio_df = st.session_state.get(
-    "portfolio_df",
-    pd.DataFrame(
-        {
-            "ticker": ["IUSQ.DE", "EUNL.DE", "IUSN.DE", "EUNM.DE"],
-            "allocation": [50, 30, 10, 10],
-        }
-    ),
-)
-portfolio_df.index = pd.RangeIndex(start=1, stop=len(portfolio_df) + 1, step=1)
 
-new_portfolio_df = st.data_editor(
-    portfolio_df[["ticker", "allocation"]],
-    num_rows="dynamic",
-    column_config={
-        "ticker": st.column_config.TextColumn("Ticker"),
-        "allocation": st.column_config.NumberColumn(
-            "Allocation (%)", min_value=0, max_value=100, step=1
-        ),
-    },
+if "tickers" not in st.session_state.to_dict():
+    st.session_state["tickers"] = "IUSQ.DE;EUNL.DE;IUSN.DE;EUNM.DE"
+    st.session_state["allocation_IUSQ.DE"] = 50
+    st.session_state["allocation_EUNL.DE"] = 30
+    st.session_state["allocation_IUSN.DE"] = 10
+    st.session_state["allocation_EUNM.DE"] = 10
+
+
+load_value("tickers")
+st.text_input(
+    "Tickers (separated by ';')",
+    key="_tickers",
+    on_change=store_value,
+    args=["tickers"],
 )
 
-portfolio_df = new_portfolio_df.copy()
+portfolio_items = []
+for i, item in enumerate(st.session_state.tickers.split(";")):
+    try:
+        ticker_data = get_ticker_details(item)
+        portfolio_items.append({"ticker": item, **ticker_data})
+    except Exception as e:
+        st.error(e)
+        st.stop()
+
+portfolio_df = pd.DataFrame.from_dict(portfolio_items)
+columns = st.columns(2)
+
+for item in portfolio_df.itertuples():
+    col = columns[item.Index % 2]
+    with col:
+        load_value(f"allocation_{item.ticker}")
+        st.number_input(
+            f"Allocation of '{item.ticker}' (%)",
+            min_value=0,
+            max_value=100,
+            key=f"_allocation_{item.ticker}",
+            on_change=store_value,
+            args=[f"allocation_{item.ticker}"],
+        )
+        store_value(f"allocation_{item.ticker}")
+
+portfolio_df["allocation"] = portfolio_df["ticker"].map(
+    lambda ticker: st.session_state[f"allocation_{ticker}"]
+)
 
 if portfolio_df["allocation"].sum() != 100:
     st.error(
@@ -68,16 +93,6 @@ if portfolio_df["allocation"].sum() != 100:
     )
     st.stop()
 
-try:
-    portfolio_df["name"] = portfolio_df["ticker"].apply(
-        lambda x: get_ticker_details(x)["name"]
-    )
-    portfolio_df["currency"] = portfolio_df["ticker"].apply(
-        lambda x: get_ticker_details(x)["currency"]
-    )
-except Exception as e:
-    st.error(str(e))
-    st.stop()
 
 st.session_state["portfolio_df"] = portfolio_df
 
