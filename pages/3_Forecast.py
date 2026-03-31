@@ -9,18 +9,23 @@ from portfolio_analyzer.metrics import (
     bin_series,
     compute_portfolio_growth,
 )
-from portfolio_analyzer.utils import ensure_portfolio_configured, fig_layout
+from portfolio_analyzer.utils import (
+    ensure_portfolio_configured,
+    fig_layout,
+    format_number_with_thousands_separator,
+)
 
 ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
 "# Portfolio Forecast"
 """
-This tool uses a Monte Carlo simulation to project your portfolio's future value,
-drawing on the historical daily returns of your selected assets
+Project your portfolio's potential future value using Monte Carlo simulations.
+This tool generates thousands of possible performance paths based on
+the historical volatility and average returns of your selected assets. 
 
-Explore the distribution of these past returns below, and adjust
-the forecast timeframe to visualize potential future paths.
+Explore your historical return distribution below,
+then adjust the forecast timeframe to visualize potential future outcomes.
 """
 
 "## Daily Returns Distribution"
@@ -103,13 +108,8 @@ returns = norm.rvs(loc=mean, scale=std, size=(num_simulations, days))
 forecast = start_values * (1 + returns).cumprod(axis=1)
 forecast = np.hstack([start_values, forecast])
 
-f"""The Monte Carlo simulation was performed by simulating {num_simulations} possible future
-paths of the portfolio value over the next {days} days,
-based on the historical mean and standard deviation of daily returns.
-
-For practical purposes, only 20 simulated paths are shown in the plot below.
-"""
-
+"""Adjust the slider below to project your portfolio's growth over a specific timeframe.
+The chart displays a sample of the potential future paths your portfolio could take."""
 st.slider(
     "Days to Forecast",
     min_value=30,
@@ -118,6 +118,17 @@ st.slider(
     key="days_slider",
     step=10,
 )
+
+with st.expander("How this forecast works"):
+    f"""
+    We ran {format_number_with_thousands_separator(num_simulations)} simulated future paths for your portfolio over the next {days} days. 
+    
+    These paths are generated using a normal distribution based on the historical mean and
+    standard deviation of your portfolio's daily returns
+    (visualized in the "Daily Returns Distribution" chart at the top of the page).
+    
+    For visual clarity, only a random sample of 20 simulated paths is displayed on the chart above.
+    """
 
 fig = px.line(
     forecast[:20, :].T,
@@ -132,16 +143,24 @@ final_day_forecast["sign"] = final_day_forecast["value"].apply(
 )
 
 "## Forecasted Portfolio Value Distribution"
-f"""Distribution of the simulated portfolio values at the end of the forecast period (day {days})."""
+f"""
+This chart breaks down the final spread of all
+{format_number_with_thousands_separator(num_simulations)}
+simulated portfolio values at the end of your {days}-day forecast period.
+
+It helps visualize the probability of different best-case and worst-case scenarios.
+"""
 left_col, right_col = st.columns(2)
 with left_col:
     st.metric(
-        "Expected Value Mean", f"{final_day_forecast['value'].mean():.0f}", border=True
+        "Expected Value Mean",
+        f"{format_number_with_thousands_separator(final_day_forecast['value'].mean())}",
+        border=True,
     )
 with right_col:
     st.metric(
         "Expected Value Standard Deviation",
-        f"{final_day_forecast['value'].std():.0f}",
+        f"{format_number_with_thousands_separator(final_day_forecast['value'].std())}",
         border=True,
     )
 

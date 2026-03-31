@@ -14,9 +14,25 @@ ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
 "# Portfolio Risks Analysis"
+"""
+This page breaks down your portfolio's exposure to downside risk and potential losses.
+It visualizes your historical maximum drawdown to highlight worst-case drops,
+and calculates your Value at Risk (VaR) to project the maximum expected
+monthly and annual losses at specific confidence levels.
+"""
 "## Maximum Drawdown"
-"""Maximum drawdown represents the maximum observed loss from a peak to a trough of a portfolio, before a new peak is attained.
-It is an indicator of downside risk over a specified time period."""
+"""
+Maximum drawdown measures the steepest historical decline from a **portfolio's peak**
+to its **lowest trough** before recovering.
+It serves as a primary indicator of worst-case downside risk.
+"""
+
+with st.expander("How to Interpret This Chart"):
+    """
+    A drawdown of 0% means the portfolio is at an all-time high. 
+    Any drop below 0% shows how much the portfolio has lost from that peak. 
+    The 'Maximum Drawdown' is the lowest point on this chart.
+    """
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist()).dropna(how="any")
 growth_df = compute_portfolio_growth(prices_df, portfolio_df)
@@ -31,30 +47,32 @@ fig.update_layout(**fig_layout, showlegend=False)
 st.plotly_chart(fig)
 
 "## Maximum Loss (Value at Risk)"
-"""Value at Risk (VaR) represent maximum expected loss over a specified time
-period at a given confidence level.
-
-We calculate annual VaR at the 95% and 99% confidence levels
-using the variance-covariance method, which assumes that returns are normally
-distributed.
-
-At a 95% or 99% confidence level, VaR means there is a 5% or 1% chance
-that the portfolio will lose more than this amount in a year.
-
-The annual VaR is estimated by scaling the monthly VaR.
-
-The VaR is computed using the following formula:
 """
-st.latex(r"VaR_{monthly} = \mu -  z \cdot \sigma")
+Value at Risk (VaR) represents the maximum expected
+loss over a specified time period at a given confidence level. 
 
-"""and the annual VaR is estimated as:"""
-st.latex(r"VaR_{annual} = 12 \cdot \mu - \sqrt{12} \cdot z \cdot \sigma")
-
-"""where:
-- $\\mu$ is the mean of the monthly returns
-- $\\sigma$ is the standard deviation of the monthly returns
-- $z$ is the z-score corresponding to the confidence level
+For example, an annual VaR at a 95% confidence level means there is only a 5%
+chance your portfolio will lose more than that amount in a given year.
 """
+
+with st.expander("View Calculation Methodology"):
+    """
+    We calculate VaR using the variance-covariance method, which assumes returns are normally distributed. 
+    The annual VaR is estimated by scaling the monthly VaR.
+    
+    The monthly VaR is computed as:
+    """
+    st.latex(r"VaR_{monthly} = \mu - z \cdot \sigma")
+
+    """and the annual VaR is estimated as:"""
+    st.latex(r"VaR_{annual} = 12 \cdot \mu - \sqrt{12} \cdot z \cdot \sigma")
+
+    r"""
+    where:
+    - $\mu$ is the mean of the monthly returns
+    - $\sigma$ is the standard deviation of the monthly returns
+    - $z$ is the z-score corresponding to the confidence level (e.g., 95% or 99%)
+    """
 
 monthly_prices_df = prices_df.resample("ME").last()
 monthly_growth_df = compute_portfolio_growth(monthly_prices_df, portfolio_df)

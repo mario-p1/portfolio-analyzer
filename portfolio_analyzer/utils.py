@@ -24,6 +24,10 @@ def store_value(key):
     st.session_state[key] = st.session_state[f"_{key}"]
 
 
+def format_number_with_thousands_separator(n: float | int) -> str:
+    return f"{n:_.0f}".replace("_", ".")
+
+
 fig_layout = {
     "hovermode": "x unified",
     "legend": {

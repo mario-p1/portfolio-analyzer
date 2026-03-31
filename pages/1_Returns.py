@@ -88,7 +88,8 @@ monthly_returns_df = calculate_return_rates(
 )
 annualized_return = calculate_arr(annual_returns_df["return"])
 
-st.metric("Annualized Return Rate", f"{annualized_return:.2f} %", border=True)
+with st.columns(2)[0]:
+    st.metric("Annualized Return Rate", f"{annualized_return:.2f} %", border=True)
 
 fig = px.bar(
     annual_returns_df,
@@ -173,22 +174,20 @@ sharpe_ratio = compute_sharpe_ratio(monthly_excess_df)
 "### Sharpe Ratio"
 """
 The Sharpe Ratio is the gold standard for measuring risk-adjusted performance.
-It helps you understand if your portfolio's returns are
-truly compensating you for the level of volatility you're enduring.
+It helps you understand if your portfolio's returns are truly
+compensating you for the level of volatility you're enduring.
 
-Mathematically, it measures your excess return per unit of risk:
-"""
+*Note: Your Sharpe Ratio below is calculated using your monthly excess returns.*"""
 
-st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
-
-"""
-Where:
- - $R_p$: Return of your portfolio
- - $R_f$: Risk-free rate
- - $\\sigma_p$: Standard deviation of your portfolio's excess return (volatility)
- 
-*Note: Your Sharpe Ratio below is calculated using your monthly excess returns.*
-"""
+with st.expander("View Calculation Methodology"):
+    """Mathematically, it measures your excess return per unit of risk:"""
+    st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
+    r"""
+    Where:
+    - $R_p$: Return of your portfolio
+    - $R_f$: Risk-free rate
+    - $\sigma_p$: Standard deviation of your portfolio's excess return (volatility)
+    """
 
 # st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
