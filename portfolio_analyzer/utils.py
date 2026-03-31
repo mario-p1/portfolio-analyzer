@@ -3,9 +3,9 @@ import streamlit as st
 
 
 def rename_ticker_columns_to_names(
-    df: pd.DataFrame, ticker_df: pd.DataFrame
+    df: pd.DataFrame, ticker_df: pd.DataFrame, name_col: str = "name"
 ) -> pd.DataFrame:
-    names_dict = ticker_df.set_index("ticker")["name"].to_dict()
+    names_dict = ticker_df.set_index("ticker")[name_col].to_dict()
     return df.rename(columns=names_dict)
 
 

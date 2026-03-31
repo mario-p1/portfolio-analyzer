@@ -10,7 +10,11 @@ def get_ticker_details(ticker):
     if "longName" not in data.keys():
         raise ValueError(f"Ticker '{ticker}' doesn't exist.")
 
-    return {"name": data["longName"], "currency": data["currency"]}
+    return {
+        "name": data["longName"],
+        "currency": data["currency"],
+        "shortName": data["shortName"],
+    }
 
 
 @st.cache_data

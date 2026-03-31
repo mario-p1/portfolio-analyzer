@@ -23,7 +23,17 @@ ensure_portfolio_configured()
 portfolio_df = st.session_state.portfolio_df
 
 "# Portfolio Returns Analysis"
+"""
+This page breaks down your portfolio's historical growth, annual returns,
+and overall risk-adjusted performance.
+It compares your gains against risk-free rates to calculate your Sharpe ratio,
+and maps out asset correlations to show exactly how your investments move together.
+"""
 "## Growth Index"
+"""
+To ensure a fair comparison, this chart tracks a hypothetical 10,000 € investment
+in each individual asset, starting simultaneously from the inception date of the newest fund.
+"""
 
 prices_df = get_prices_df(portfolio_df["ticker"].tolist())
 
@@ -38,16 +48,22 @@ portfolio_growth_df = compute_portfolio_growth(
 beginning from the newest fund's starting date."""
 
 indv_growth_df = portfolio_growth_df[portfolio_df["ticker"]]
-indv_growth_df = rename_ticker_columns_to_names(indv_growth_df, portfolio_df)
 
-fig = px.line(indv_growth_df, labels={"variable": "Asset", "value": "Value"})
+
+fig = px.line(
+    rename_ticker_columns_to_names(indv_growth_df, portfolio_df),
+    labels={"variable": "Asset", "value": "Value"},
+)
 fig.update_layout(**fig_layout)
 
 st.plotly_chart(fig)
 
 "### Portfolio Performance"
-"""Your portfolio receives 10.000 €, invested at the beggining from the newest fund's starting date.
-The growth of the portfolio is calculated as the weighted average of the growth of each asset, according to the allocation you defined."""
+"""
+This chart illustrates the growth of a 10,000 € initial investment
+in your overall portfolio.
+The total value is calculated using the weighted average of your
+assets based on your defined allocation."""
 portfolio_performance_df = portfolio_growth_df[["portfolio_growth"]]
 fig = px.line(
     portfolio_performance_df,
@@ -59,7 +75,11 @@ fig.update_layout(**fig_layout, showlegend=False)
 st.plotly_chart(fig)
 
 "## Annual Returns"
-"""Your portfolio's return rate is calculated as the percentage change of the portfolio value from one year to the next."""
+"""
+Review your year-over-year performance.
+This section tracks the annual percentage change in your portfolio's total value,
+helping you identify long-term trends and volatility.
+"""
 annual_returns_df = calculate_return_rates(
     portfolio_performance_df.resample("YE").last()["portfolio_growth"]
 )
@@ -83,6 +103,11 @@ st.plotly_chart(fig)
 
 
 "### Annual Returns Count"
+"""
+This chart groups your historical returns into specific percentage ranges,
+giving you a clear visual breakdown of how often your portfolio
+experiences different levels of gains or losses.
+"""
 annual_bins_df = bin_series(
     annual_returns_df["return"], bin_by=5, label_suffix=" %", cutoff_bins=False
 )
@@ -99,9 +124,14 @@ fig.update_layout(showlegend=False)
 st.plotly_chart(fig)
 
 "## Excess Return Rate vs Risk-Free Rate"
-"""The risk-free rate used is the average 3-month Euribor rate.
-The excess return rate is calculated as the difference between
-the portfolio's annual return rate and the risk-free annual rate."""
+"""
+We use the average 3-month Euribor as our baseline risk-free rate.
+Your excess return shows the exact difference between your portfolio's
+actual gains and this baseline, revealing how much value your
+investment strategy is adding over a safe asset.
+
+You can toggle between annual and monthly views to analyze this performance across different timeframes.
+"""
 monthly_risk_free_rates_df, annual_risk_free_rates_df = load_risk_free_rates()
 
 
@@ -141,19 +171,24 @@ sharpe_ratio = compute_sharpe_ratio(monthly_excess_df)
 
 "## Risk-Adjusted Performance"
 "### Sharpe Ratio"
-"The Sharpe Ratio is a measure of an investment's risk-adjusted performance,\
-calculated by comparing its return to that of a risk-free asset.\
-It's calculated with the following formula:"
+"""
+The Sharpe Ratio is the gold standard for measuring risk-adjusted performance.
+It helps you understand if your portfolio's returns are
+truly compensating you for the level of volatility you're enduring.
+
+Mathematically, it measures your excess return per unit of risk:
+"""
 
 st.latex(r"Sharpe Ratio = \frac{R_p - R_f}{\sigma_p}")
 
 """
 Where:
- - $R_p$: return of the portfolio
- - $R_f$: risk-free rate
- - $\\sigma_p$: Standard deviation of the portfolio's excess return
+ - $R_p$: Return of your portfolio
+ - $R_f$: Risk-free rate
+ - $\\sigma_p$: Standard deviation of your portfolio's excess return (volatility)
  
-The Sharpe Ratio is calculated from monthly excess returns."""
+*Note: Your Sharpe Ratio below is calculated using your monthly excess returns.*
+"""
 
 # st.metric("Your Portfolio Sharpe Ratio", f"{sharpe_ratio:.2f}", border=True)
 
@@ -199,18 +234,22 @@ st.plotly_chart(fig)
 
 "## Returns Correlations"
 """
-Correlation measures how the returns of different assets in your portfolio move in relation to each other.
-A higher correlation means two assets' returns tend to move in the same direction,
-while a lower correlation means they move more independently.
+Correlation reveals the underlying relationships between your investments.
+It shows whether your assets tend to rise and fall together (high correlation)
+or move independently (low correlation). 
 
-Lower correlations between assets can help reduce overall portfolio risk and improve diversification.
+Mixing assets that don't move in lockstep is the key to smoothing out volatility,
+reducing your overall risk, and building a truly diversified portfolio.
 """
 indv_returns_df = indv_growth_df.copy()
-
-for col in indv_growth_df.columns:
+indv_returns_df = rename_ticker_columns_to_names(indv_returns_df, portfolio_df, "name")
+for col in indv_returns_df.columns:
     indv_returns_df[col] = calculate_return_rates(indv_returns_df[col])["return"]
 
 corr_df = indv_returns_df.corr()
 
-fig = px.imshow(corr_df)
+fig = px.imshow(corr_df, zmin=-1, zmax=1)
+fig.update_xaxes(tickangle=30)
+fig.update_layout(height=500)
+
 st.plotly_chart(fig)
